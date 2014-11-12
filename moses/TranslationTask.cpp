@@ -12,6 +12,8 @@
 
 #include "moses/Syntax/S2T/Parsers/RecursiveCYKPlusParser/RecursiveCYKPlusParser.h"
 #include "moses/Syntax/S2T/Parsers/Scope3Parser/Parser.h"
+#include "moses/Syntax/T2S/RuleMatcherCallback.h"
+#include "moses/Syntax/T2S/RuleMatcherSCFG.h"
 
 #include "util/exception.hh"
 
@@ -337,6 +339,11 @@ void TranslationTask::RunChart()
       } else {
         UTIL_THROW2("ERROR: unhandled S2T parsing algorithm");
       }
+      return;
+    } else if (staticData.UseT2SDecoder()) {
+      typedef Syntax::T2S::RuleMatcherCallback Callback;
+      typedef Syntax::T2S::RuleMatcherSCFG<Callback> RuleMatcher;
+      DecodeT2S<RuleMatcher>();
       return;
     }
 

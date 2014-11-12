@@ -200,6 +200,7 @@ protected:
   bool m_useLegacyPT;
   bool m_defaultNonTermOnlyForEmptyRange;
   bool m_useS2TDecoder;
+  bool m_useT2SDecoder;
   S2TParsingAlgorithm m_s2tParsingAlgorithm;
   bool m_printNBestTrees;
 
@@ -771,6 +772,9 @@ public:
 
   bool UseS2TDecoder() const {
     return m_useS2TDecoder;
+  }
+  bool UseT2SDecoder() const {
+    return m_useT2SDecoder;
   }
   S2TParsingAlgorithm GetS2TParsingAlgorithm() const {
     return m_s2tParsingAlgorithm;

@@ -9,6 +9,7 @@
 #include "moses/ChartManager.h"
 
 #include "moses/Syntax/S2T/Manager.h"
+#include "moses/Syntax/T2S/Manager.h"
 
 namespace Moses
 {
@@ -79,7 +80,35 @@ private:
     }
   }
 
+  template<typename RuleMatcher>
+  void DecodeT2S() {
+    const StaticData &staticData = StaticData::Instance();
+    const std::size_t translationId = m_source->GetTranslationId();
+    const TreeInput *tree = NULL;
+    if (!(tree = dynamic_cast<const TreeInput *>(m_source))) {
+      // TODO
+    }
+    Syntax::T2S::Manager<RuleMatcher> manager(*tree);
+    manager.Decode();
+    // 1-best
+    const Syntax::SHyperedge *best = manager.GetBestSHyperedge();
+    m_ioWrapper.OutputBestHypo(best, translationId);
+    // n-best
+    if (staticData.GetNBestSize() > 0) {
+      Syntax::KBestExtractor::KBestVec nBestList;
+      manager.ExtractKBest(staticData.GetNBestSize(), nBestList,
+                           staticData.GetDistinctNBest());
+      m_ioWrapper.OutputNBestList(nBestList, translationId);
+    }
+    // Write 1-best derivation (-translation-details / -T option).
+    if (staticData.IsDetailedTranslationReportingEnabled()) {
+      m_ioWrapper.OutputDetailedTranslationReport(best, translationId);
+    }
+    // Write unknown words file (-output-unknowns option)
+    if (!staticData.GetOutputUnknownsFile().empty()) {
+      m_ioWrapper.OutputUnknowns(manager.GetUnknownWords(), translationId);
+    }
+  }
 };
-
 
 } //namespace

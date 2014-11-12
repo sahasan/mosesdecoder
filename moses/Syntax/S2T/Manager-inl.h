@@ -259,6 +259,7 @@ const SHyperedge *Manager<Parser>::GetBestSHyperedge() const
   }
   assert(stacks.Size() == 1);
   const std::vector<boost::shared_ptr<SVertex> > &stack = stacks.Begin()->second;
+  // TODO 
   return stack[0]->best;
 }
 

@@ -207,6 +207,7 @@ Parameter::Parameter()
   AddParam("default-non-term-for-empty-range-only", "Don't add [X] to all ranges, just ranges where there isn't a source non-term. Default = false (ie. add [X] everywhere)");
   AddParam("s2t", "Use specialized string-to-tree decoder.");
   AddParam("s2t-parsing-algorithm", "Which S2T parsing algorithm to use. 0=recursive CYK+, 1=scope-3 (default = 0)");
+  AddParam("t2s", "Use specialized tree-to-string decoder.");
 }
 
 Parameter::~Parameter()

@@ -68,6 +68,7 @@ StaticData::StaticData()
   ,m_currentWeightSetting("default")
   ,m_treeStructure(NULL)
   ,m_useS2TDecoder(false)
+  ,m_useT2SDecoder(false)
 {
   m_xmlBrackets.first="<";
   m_xmlBrackets.second=">";
@@ -438,6 +439,9 @@ bool StaticData::LoadData(Parameter *parameter)
   SetBooleanParameter( &m_useS2TDecoder, "s2t", false );
   m_s2tParsingAlgorithm = (m_parameter->GetParam("s2t-parsing-algorithm").size() > 0) ?
                       (S2TParsingAlgorithm) Scan<size_t>(m_parameter->GetParam("s2t-parsing-algorithm")[0]) : RecursiveCYKPlus;
+
+  // T2S decoder
+  SetBooleanParameter( &m_useT2SDecoder, "t2s", false );
 
   // Compact phrase table and reordering model
   SetBooleanParameter( &m_minphrMemory, "minphr-memory", false );
@@ -1160,7 +1164,7 @@ std::map<std::string, std::string> StaticData::OverrideFeatureNames()
 		}
 	}
 
-  if (m_useS2TDecoder) {
+  if (m_useS2TDecoder || m_useT2SDecoder) {
     // Automatically override PhraseDictionary{Memory,Scope3}.  This will
     // have to change if the FF parameters diverge too much in the future,
     // but for now it makes switching between the old and new decoders much

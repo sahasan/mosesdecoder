@@ -4,6 +4,8 @@
 #include "moses/Syntax/S2T/RuleTrieCYKPlus.h"
 #include "moses/Syntax/S2T/RuleTrieLoader.h"
 #include "moses/Syntax/S2T/RuleTrieScope3.h"
+#include "moses/Syntax/T2S/RuleTrie.h"
+#include "moses/Syntax/T2S/RuleTrieLoader.h"
 
 namespace Moses
 {
@@ -27,9 +29,7 @@ void RuleTableFF::Load()
   SetFeaturesToApply();
 
   const StaticData &staticData = StaticData::Instance();
-  if (!staticData.UseS2TDecoder()) {
-    UTIL_THROW2("ERROR: RuleTableFF currently only supports S2T decoder");
-  } else {
+  if (staticData.UseS2TDecoder()) {
     S2TParsingAlgorithm algorithm = staticData.GetS2TParsingAlgorithm();
     if (algorithm == RecursiveCYKPlus) {
       S2T::RuleTrieCYKPlus *trie = new S2T::RuleTrieCYKPlus(this);
@@ -44,6 +44,14 @@ void RuleTableFF::Load()
     } else {
       UTIL_THROW2("ERROR: unhandled S2T parsing algorithm");
     }
+  } else if (staticData.UseT2SDecoder()) {
+    T2S::RuleTrie *trie = new T2S::RuleTrie(this);
+    T2S::RuleTrieLoader loader;
+    loader.Load(m_input, m_output, m_filePath, *this, *trie);
+    m_table = trie;
+  } else {
+    UTIL_THROW2(
+      "ERROR: RuleTableFF currently only supports S2T and T2S decoders");
   }
 }
 

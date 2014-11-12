@@ -1421,7 +1421,11 @@ void IOWrapper::OutputDetailedTranslationReport(const Syntax::SHyperedge *best,
     return;
   }
   std::ostringstream out;
-  Syntax::S2T::DerivationWriter::Write(*best, translationId, out);
+  if (StaticData::Instance().UseS2TDecoder()) {
+    Syntax::S2T::DerivationWriter::Write(*best, translationId, out);
+  } else if (StaticData::Instance().UseT2SDecoder()) {
+    // TODO
+  }
   UTIL_THROW_IF2(m_detailedTranslationCollector == NULL,
 		  "No ouput file for detailed reports specified");
   m_detailedTranslationCollector->Write(translationId, out.str());
