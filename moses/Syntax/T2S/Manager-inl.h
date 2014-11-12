@@ -153,6 +153,10 @@ void Manager<RuleMatcher>::Decode()
     std::vector<SHyperedge*> buffer;
     while (count < popLimit && !cubeQueue.IsEmpty()) {
       SHyperedge *hyperedge = cubeQueue.Pop();
+      // FIXME See corresponding code in S2T::Manager
+      // BEGIN{HACK}
+      hyperedge->head->pvertex = &(node.pvertex);
+      // END{HACK}
       buffer.push_back(hyperedge);
       ++count;
     }
