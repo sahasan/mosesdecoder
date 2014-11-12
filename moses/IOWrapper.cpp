@@ -37,10 +37,11 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <boost/algorithm/string.hpp>
 
 #include "moses/Syntax/KBestExtractor.h"
+#include "moses/Syntax/PVertex.h"
 #include "moses/Syntax/SHyperedge.h"
 #include "moses/Syntax/S2T/DerivationWriter.h"
-#include "moses/Syntax/PVertex.h"
 #include "moses/Syntax/SVertex.h"
+#include "moses/Syntax/T2S/DerivationWriter.h"
 
 #include "moses/TypeDef.h"
 #include "moses/Util.h"
@@ -1421,10 +1422,11 @@ void IOWrapper::OutputDetailedTranslationReport(const Syntax::SHyperedge *best,
     return;
   }
   std::ostringstream out;
+  // TODO Merge DerivationWriter classes.
   if (StaticData::Instance().UseS2TDecoder()) {
     Syntax::S2T::DerivationWriter::Write(*best, translationId, out);
   } else if (StaticData::Instance().UseT2SDecoder()) {
-    // TODO
+    Syntax::T2S::DerivationWriter::Write(*best, translationId, out);
   }
   UTIL_THROW_IF2(m_detailedTranslationCollector == NULL,
 		  "No ouput file for detailed reports specified");
