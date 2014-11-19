@@ -13,6 +13,7 @@
 #include "moses/TranslationModel/PhraseDictionaryMultiModelCounts.h"
 #include "moses/TreeInput.h"
 #include "moses/LM/ORLM.h"
+#include "moses-cmd/IOWrapper.h"
 
 #ifdef WITH_THREADS
 #include <boost/thread.hpp>
@@ -23,9 +24,16 @@
 #include <xmlrpc-c/server_abyss.hpp>
 
 using namespace Moses;
+using namespace MosesCmd;
 using namespace std;
 
 typedef std::map<std::string, xmlrpc_c::value> params_t;
+
+bool getBooleanValue(const std::string& in) {
+  if(in=="true" || in=="True" || in=="TRUE" || in=="1") return true;
+  return false;
+}
+
 
 class Updater: public xmlrpc_c::method
 {
@@ -215,17 +223,17 @@ public:
 
     cerr << "Input: " << source << endl;
     si = params.find("align");
-    bool addAlignInfo = (si != params.end());
+    bool addAlignInfo =  (si != params.end()) ? getBooleanValue(string(xmlrpc_c::value_string(si->second))) : false;
     si = params.find("sg");
-    bool addGraphInfo = (si != params.end());
+    bool addGraphInfo =  (si != params.end()) ? getBooleanValue(string(xmlrpc_c::value_string(si->second))) : false;
     si = params.find("topt");
-    bool addTopts = (si != params.end());
+    bool addTopts =  (si != params.end()) ? getBooleanValue(string(xmlrpc_c::value_string(si->second))) : false;
     si = params.find("report-all-factors");
-    bool reportAllFactors = (si != params.end());
+    bool reportAllFactors =  (si != params.end()) ? getBooleanValue(string(xmlrpc_c::value_string(si->second))) : false;
     si = params.find("nbest");
     int nbest_size = (si == params.end()) ? 0 : int(xmlrpc_c::value_int(si->second));
     si = params.find("nbest-distinct");
-    bool nbest_distinct = (si != params.end());
+    bool nbest_distinct =  (si != params.end()) ? getBooleanValue(string(xmlrpc_c::value_string(si->second))) : false;
 
     vector<float> multiModelWeights;
     si = params.find("lambda");
@@ -267,7 +275,7 @@ public:
           staticData.GetInputFactorOrder();
         stringstream in(source + "\n");
         sentence.Read(in,inputFactorOrder);
-	size_t lineNumber = 0; // TODO: Include sentence request number here?
+        size_t lineNumber = 0; // TODO: Include sentence request number here?
         Manager manager(lineNumber, sentence, staticData.GetSearchAlgorithm());
         manager.ProcessSentence();
         const Hypothesis* hypo = manager.GetBestHypothesis();
@@ -302,12 +310,26 @@ public:
       Phrase p = hypo->GetCurrTargetPhrase();
       if(reportAllFactors) {
         out << p << " ";
-      } else {
+      }
+      else {
+        FactorType placeholderFactor = StaticData::Instance().GetPlaceholderFactor();
+        std::map<size_t, const Factor*> placeholders;
+        if (placeholderFactor != NOT_FOUND) {
+          // creates map of target position -> factor for placeholders
+          placeholders = GetPlaceholders(*hypo, placeholderFactor);
+        }
         for (size_t pos = 0 ; pos < p.GetSize() ; pos++) {
           const Factor *factor = p.GetFactor(pos, 0);
+          if (placeholders.size()) {
+            // do placeholders
+            std::map<size_t, const Factor*>::const_iterator iter = placeholders.find(pos);
+            if (iter != placeholders.end()) {
+              factor = iter->second;
+            }
+          }
           out << *factor << " ";
         }
-      }
+      }      
 
       if (addAlignmentInfo) {
         /**

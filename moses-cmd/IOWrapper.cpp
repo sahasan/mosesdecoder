@@ -207,9 +207,10 @@ std::map<size_t, const Factor*> GetPlaceholders(const Hypothesis &hypo, FactorTy
     const Factor *factor = inputPhrase.GetFactor(sourcePos, placeholderFactor);
     if (factor) {
       std::set<size_t> targetPos = hypo.GetTranslationOption().GetTargetPhrase().GetAlignTerm().GetAlignmentsForSource(sourcePos);
-      UTIL_THROW_IF2(targetPos.size() != 1,
-    		  "Placeholder should be aligned to 1, and only 1, word");
-      ret[*targetPos.begin()] = factor;
+      if(targetPos.size() != 1)
+        UserMessage::Add("WARNING: Placeholder should be aligned to 1, and only 1, word");
+      else
+        ret[*targetPos.begin()] = factor;
     }
   }
 
