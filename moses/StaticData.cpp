@@ -22,6 +22,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <string>
 
+#include "util/usage.hh"
+
 #include "TypeDef.h"
 #include "moses/FF/WordPenaltyProducer.h"
 #include "moses/FF/UnknownWordPenaltyProducer.h"
@@ -910,7 +912,14 @@ void StaticData::LoadFeatureFunctions()
 
     if (doLoad) {
       VERBOSE(1, "Loading " << ff->GetScoreProducerDescription() << endl);
+      Timer timer;
+      timer.start();
+      util::Memory memory;
+      memory.start();
       ff->Load();
+      timer.check("Loading time");
+      memory.stop();
+      VERBOSE(1, "Memory needed for model: " << memory.getVMEMMB()  << "[MB]" << std::endl);
     }
   }
 
@@ -918,7 +927,14 @@ void StaticData::LoadFeatureFunctions()
   for (size_t i = 0; i < pts.size(); ++i) {
     PhraseDictionary *pt = pts[i];
     VERBOSE(1, "Loading " << pt->GetScoreProducerDescription() << endl);
+    Timer timer;
+    util::Memory memory;
+    memory.start();
+    timer.start();
     pt->Load();
+    timer.check("Loading time");
+    memory.stop();
+    VERBOSE(1, "Memory needed for model: " << memory.getVMEMMB()  << "[MB]" << std::endl);
   }
 
   CheckLEGACYPT();

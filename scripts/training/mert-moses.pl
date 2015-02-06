@@ -86,6 +86,7 @@ my $___RANDOM_DIRECTIONS = 0; # search in random directions only
 my $___NUM_RANDOM_DIRECTIONS = 0; # number of random directions, also works with default optimizer [Cer&al.,2008]
 my $___RANDOM_RESTARTS = 20;
 my $___RETURN_BEST_DEV = 0; # return the best weights according to dev, not the last
+my $___MERT_OBJFUNC = "BLEU"; # default objective function
 
 # Flags related to PRO (Hopkins & May, 2011)
 my $___PAIRWISE_RANKED_OPTIMIZER = 0; # flag to enable PRO.
@@ -157,6 +158,9 @@ my $prev_aggregate_nbl_size = -1; # number of previous step to consider when loa
                                   # and so on
 my $maximum_iterations = 25;
 
+my $nbestpreprocessscript = "";   #allow preprocessing on nbest lists before scoring
+my $___TESTSETS = "";             #test sets to be translated when mert is done
+
 use Getopt::Long;
 GetOptions(
   "working-dir=s" => \$___WORKING_DIR,
@@ -209,7 +213,10 @@ GetOptions(
   "batch-mira-args=s" => \$batch_mira_args,
   "promix-training=s" => \$__PROMIX_TRAINING,
   "promix-table=s" => \@__PROMIX_TABLES,
-  "threads=i" => \$__THREADS
+  "threads=i" => \$__THREADS,
+  "objfunc=s" => \$___MERT_OBJFUNC,
+  "nbestpreprocess:s" => \$nbestpreprocessscript,
+  "test:s" => \$___TESTSETS,
 ) or exit(1);
 
 # the 4 required parameters can be supplied on the command line directly
@@ -303,6 +310,11 @@ Options:
   --threads=NUMBER          ... Use multi-threaded mert (must be compiled in).
   --historic-interpolation  ... Interpolate optimized weights with prior iterations' weight
                                 (parameter sets factor [0;1] given to current weights)
+  --objfunc=[BLEU|TER|PER|WER|CDER|SEMPOS|HAMMING] ... objective function during optimization
+                                (default: BLEU)
+  --nbestpreprocess=STRING  ... script for nbest preprocessing before scoring
+  --test=t1,t2,...          ... comma separated list of test sets to be translated
+                                when mert is done
 ";
   exit 1;
 }
@@ -763,8 +775,14 @@ while (1) {
       $lsamp_file      = "$lsamp_file.gz";
       $nbest_file      = "$combined_file";
     }
-    safesystem("gzip -f $nbest_file") or die "Failed to gzip run*out";
-    $nbest_file = $nbest_file.".gz";
+    if ($nbestpreprocessscript){
+      safesystem("$nbestpreprocessscript $nbest_file | gzip > $nbest_file.prep.gz") or die "Failed to preprocess $nbest_file: $!";
+      safesystem("gzip -f $nbest_file") or die "Failed to gzip run*out";
+      $nbest_file = $nbest_file.".prep.gz";
+    } else{
+      safesystem("gzip -f $nbest_file") or die "Failed to gzip run*out";
+      $nbest_file = $nbest_file.".gz";
+    }
   } else {
     $nbest_file = "run$run.best$___N_BEST_LIST_SIZE.out.gz";
     print "skipped decoder run $run\n";
@@ -780,7 +798,7 @@ while (1) {
   my $feature_file      = "run$run.${base_feature_file}";
   my $score_file        = "run$run.${base_score_file}";
 
-  my $cmd = "$mert_extract_cmd $mert_extract_args --scfile $score_file --ffile $feature_file -r " . join(",", @references) . " -n $nbest_file";
+  my $cmd = "$mert_extract_cmd $mert_extract_args -s $___MERT_OBJFUNC --scfile $score_file --ffile $feature_file -r " . join(",", @references) . " -n $nbest_file";
   $cmd .= " -d" if $__PROMIX_TRAINING; # Allow duplicates
   # remove segmentation
   $cmd .= " -l $__REMOVE_SEGMENTATION" if  $__PROMIX_TRAINING;
@@ -806,7 +824,7 @@ while (1) {
   my $DIM = scalar(@CURR); # number of lambdas
 
   # run mert
-  $cmd = "$mert_mert_cmd -d $DIM $mert_mert_args";
+  $cmd = "$mert_mert_cmd -s $___MERT_OBJFUNC -d $DIM $mert_mert_args";
 
   my $mert_settings = " -n $___RANDOM_RESTARTS";
   my $seed_settings = "";
@@ -1070,7 +1088,7 @@ if($___RETURN_BEST_DEV) {
   my $bestbleu=0;
   my $evalout = "eval.out";
   for (my $i = 1; $i < $run; $i++) {
-    my $cmd = "$mert_eval_cmd --reference " . join(",", @references) . " -s BLEU --candidate run$i.out";
+    my $cmd = "$mert_eval_cmd --reference " . join(",", @references) . " -s $___MERT_OBJFUNC --candidate run$i.out";
     $cmd .= " -l $__REMOVE_SEGMENTATION" if defined( $__PROMIX_TRAINING);
     safesystem("$cmd 2> /dev/null 1> $evalout");
     open my $fh, '<', $evalout or die "Can't read $evalout : $!";
@@ -1097,9 +1115,31 @@ else {
 # just to be sure that we have the really last finished step marked
 &save_finished_step($finished_step_file, $run);
 
+print "Training finished at " . `date`;
+
+#if we have some test sets then translate them
+if ($___TESTSETS){
+  my @tests=split(/,/,$___TESTSETS);
+  my $ini="$___WORKING_DIR/moses.ini";
+  print "current dir=",cwd(),"\ntest sets=$___TESTSETS\nmoses=$___DECODER\nini=$ini\n";
+  for my $test (@tests){
+    my $out = $test;
+    $out =~ s/.+\///; #get file name
+    $out =~ s/^input-//;
+    $out =~ s/-tokenized-lowercased//;  #usual ebay suffix
+    $out =~ s/.split$//;  #for german compound split
+    $out = $___WORKING_DIR . "/" . $out . ".hyp";
+    if (! -s $out){
+      safesystem("$___DECODER -th $__THREADS -f $ini  < $cwd/$test > $out")
+      #TODO use qsubmit
+      #qsubmit -m 64 -t 12:00:00 -n j.tr.$test "$___DECODER -th $__THREADS -f $ini  < $cwd/$test > $out"
+    }
+  }
+}
+
 #chdir back to the original directory # useless, just to remind we were not there
 chdir($cwd);
-print "Training finished at " . `date`;
+
 } # end of local scope
 
 sub get_weights_from_mert {
@@ -1393,7 +1433,11 @@ sub create_config {
   open my $out, '>', $outfn or die "Can't write $outfn: $!";
   print $out "# MERT optimized configuration\n";
   print $out "# decoder $___DECODER\n";
-  print $out "# BLEU $bleu_achieved on dev $___DEV_F\n";
+  if ($___MERT_OBJFUNC eq "BLEU") {
+      print $out "# $___MERT_OBJFUNC $bleu_achieved on dev $___DEV_F\n";
+  } else {
+      print $out "# 1-$___MERT_OBJFUNC $bleu_achieved on dev $___DEV_F\n";
+  }
   print $out "# We were before running iteration $iteration\n";
   print $out "# finished ".`date`;
 

@@ -43,11 +43,6 @@ float FloatSec(const struct timespec &tv) {
   return static_cast<float>(tv.tv_sec) + (static_cast<float>(tv.tv_nsec) / 1000000000.0);
 }
 
-const char *SkipSpaces(const char *at) {
-  for (; *at == ' ' || *at == '\t'; ++at) {}
-  return at;
-}
-
 class RecordStart {
   public:
     RecordStart() {
@@ -65,6 +60,27 @@ class RecordStart {
 const RecordStart kRecordStart;
 } // namespace
 #endif
+
+
+const char *SkipSpaces(const char *at) {
+  for (; *at == ' ' || *at == '\t'; ++at) {}
+  return at;
+}
+
+
+void Memory::update(int &vmem, int &pmem){ //Note: this value is in KB!
+    std::ifstream status("/proc/self/status", std::ios::in);
+    std::string header, value;
+    while ((status >> header) && getline(status, value)) {
+      if (header == "VmPeak:") {
+        pmem = atoi(util::SkipSpaces(value.c_str()));
+      }
+      else if (header == "VmRSS:") {
+        vmem = atoi(util::SkipSpaces(value.c_str()));
+      }
+    }
+}
+
 
 void PrintUsage(std::ostream &out) {
 #if !defined(_WIN32) && !defined(_WIN64)

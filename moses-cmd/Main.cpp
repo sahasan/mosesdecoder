@@ -574,9 +574,12 @@ int main(int argc, char** argv)
 
     // initialize all "global" variables, which are stored in StaticData
     // note: this also loads models such as the language model, etc.
+    Timer timer;
+    timer.start();
     if (!StaticData::LoadDataStatic(&params, argv[0])) {
       exit(1);
     }
+    timer.check("\n\nTotal loading time");
 
     // setting "-show-weights" -> just dump out weights and exit
     if (params.isParamSpecified("show-weights")) {
@@ -719,12 +722,15 @@ int main(int argc, char** argv)
 #endif
 
     // main loop over set of input sentences
+    timer.start();
+    size_t numTokens(0);
     InputType* source = NULL;
     size_t lineCount = staticData.GetStartTranslationId();
     while(ReadInput(*ioWrapper,staticData.GetInputType(),source)) {
       IFVERBOSE(1) {
         ResetUserTime();
       }
+      numTokens+=source->GetSize();
       // set up task of translating one sentence
       TranslationTask* task =
         new TranslationTask(lineCount,source, outputCollector.get(),
@@ -753,6 +759,15 @@ int main(int argc, char** argv)
 #ifdef WITH_THREADS
     pool.Stop(true); //flush remaining jobs
 #endif
+
+    //some logging
+    stringstream ss;
+    ss << "Number of words translated: " << numTokens << std::endl;
+    TRACE_ERR (ss.str());
+    timer.check("Total translation time");
+    ss.clear();
+    ss << "Words per second: " << 1.0*numTokens/timer.get_elapsed_time() << "[w/s]" << std::endl;
+    TRACE_ERR  (ss.str());
 
     delete ioWrapper;
 
