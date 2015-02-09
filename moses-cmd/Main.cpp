@@ -722,7 +722,9 @@ int main(int argc, char** argv)
 #endif
 
     // main loop over set of input sentences
-    timer.start();
+    //stupid timer
+    Timer transTime;
+    transTime.start();
     size_t numTokens(0);
     InputType* source = NULL;
     size_t lineCount = staticData.GetStartTranslationId();
@@ -764,10 +766,10 @@ int main(int argc, char** argv)
     stringstream ss;
     ss << "Number of words translated: " << numTokens << std::endl;
     TRACE_ERR (ss.str());
-    timer.check("Total translation time");
+    transTime.check("Total translation time");
     ss.str("");
     ss.clear();
-    ss << "Words per second: " << 1.0*numTokens/timer.get_elapsed_time() << "[w/s]" << std::endl;
+    ss << "Words per second: " << 1.0*numTokens/transTime.get_elapsed_time() << "[w/s]" << std::endl;
     TRACE_ERR  (ss.str());
 
     delete ioWrapper;

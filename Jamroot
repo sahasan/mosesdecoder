@@ -107,7 +107,7 @@ if [ option.get "enable-mpi" : : "yes" ] {
 requirements += [ option.get "notrace" : <define>TRACE_ENABLE=1 ] ;
 requirements += [ option.get "enable-boost-pool" : : <define>USE_BOOST_POOL ] ;
 
-if [ option.get "with-cmph" ] {
+if [ option.get "with-cmph" : : "yes" ] {
   requirements += <define>HAVE_CMPH ;
 }
 
