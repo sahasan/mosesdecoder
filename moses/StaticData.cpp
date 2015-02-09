@@ -518,14 +518,29 @@ bool StaticData::LoadData(Parameter *parameter)
     std::map<std::string, std::string>::const_iterator iter = featureNameOverride.find(feature);
     if (iter == featureNameOverride.end()) {
     	// feature name not override
+      //kenlm is loaded on construct, meh
+      Timer timer;
+      timer.start();
+      util::Memory memory;
+      memory.start();
     	m_registry.Construct(feature, line);
+    	timer.check("Construction time");
+      memory.stop();
+      VERBOSE(1, "Construction memory needed for model: " << memory.getVMEMMB()  << "[MB]" << std::endl);
     }
     else {
     	// replace feature name with new name
     	string newName = iter->second;
     	feature = newName;
     	string newLine = Join(" ", toks);
+    	Timer timer;
+      timer.start();
+      util::Memory memory;
+      memory.start();
     	m_registry.Construct(newName, newLine);
+    	timer.check("Construction time");
+      memory.stop();
+      VERBOSE(1, "Construction memory needed for model: " << memory.getVMEMMB()  << "[MB]" << std::endl);
     }
 
   }
@@ -919,7 +934,7 @@ void StaticData::LoadFeatureFunctions()
       ff->Load();
       timer.check("Loading time");
       memory.stop();
-      VERBOSE(1, "Memory needed for model: " << memory.getVMEMMB()  << "[MB]" << std::endl);
+      VERBOSE(1, "Loading memory needed for model: " << memory.getVMEMMB()  << "[MB]" << std::endl);
     }
   }
 
@@ -934,7 +949,7 @@ void StaticData::LoadFeatureFunctions()
     pt->Load();
     timer.check("Loading time");
     memory.stop();
-    VERBOSE(1, "Memory needed for model: " << memory.getVMEMMB()  << "[MB]" << std::endl);
+    VERBOSE(1, "Loading memory needed for model: " << memory.getVMEMMB()  << "[MB]" << std::endl);
   }
 
   CheckLEGACYPT();

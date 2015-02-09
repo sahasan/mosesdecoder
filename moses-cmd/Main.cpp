@@ -765,6 +765,7 @@ int main(int argc, char** argv)
     ss << "Number of words translated: " << numTokens << std::endl;
     TRACE_ERR (ss.str());
     timer.check("Total translation time");
+    ss.str("");
     ss.clear();
     ss << "Words per second: " << 1.0*numTokens/timer.get_elapsed_time() << "[w/s]" << std::endl;
     TRACE_ERR  (ss.str());
