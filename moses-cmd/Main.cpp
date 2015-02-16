@@ -112,7 +112,7 @@ public:
 
     // report thread number
 #if defined(WITH_THREADS) && defined(BOOST_HAS_PTHREADS)
-    TRACE_ERR("Translating line " << m_lineNumber << "  in thread id " << pthread_self() << std::endl);
+    VERBOSE(1, "Translating line " << m_lineNumber << " in thread id " << pthread_self() << endl);
 #endif
 
     Timer translationTime;
@@ -576,10 +576,16 @@ int main(int argc, char** argv)
     // note: this also loads models such as the language model, etc.
     Timer timer;
     timer.start();
+    util::Memory memory;
+    memory.start();
     if (!StaticData::LoadDataStatic(&params, argv[0])) {
       exit(1);
     }
-    timer.check("\n\nTotal loading time");
+    memory.stop();
+    stringstream mss;
+    mss << "\nTotal loading time: " << timer.get_elapsed_time() << "[s]" << endl;
+    mss << "Total loading memory: " << memory.getVMEMMB() << "[MB]" << endl << endl;
+    VERBOSE(0,mss.str());
 
     // setting "-show-weights" -> just dump out weights and exit
     if (params.isParamSpecified("show-weights")) {
@@ -764,13 +770,10 @@ int main(int argc, char** argv)
 
     //some logging
     stringstream ss;
-    ss << "Number of words translated: " << numTokens << std::endl;
-    TRACE_ERR (ss.str());
-    transTime.check("Total translation time");
-    ss.str("");
-    ss.clear();
-    ss << "Words per second: " << 1.0*numTokens/transTime.get_elapsed_time() << "[w/s]" << std::endl;
-    TRACE_ERR  (ss.str());
+    ss << "\nNumber of words translated: " << numTokens << std::endl;
+    ss << "Total translation time: " << transTime.get_elapsed_time() << "[s]" << std::endl;
+    ss << "Words per second: " << 1.0*numTokens/transTime.get_elapsed_time() << "[w/s]" << std::endl << endl;
+    VERBOSE(0, ss.str());
 
     delete ioWrapper;
 

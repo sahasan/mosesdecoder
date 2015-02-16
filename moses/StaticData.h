@@ -731,6 +731,9 @@ public:
     return m_useLegacyPT;
   }
 
+private:
+  void printTimeMem(char *msg, double time, double mem);
+
 };
 
 }

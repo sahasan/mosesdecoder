@@ -524,9 +524,8 @@ bool StaticData::LoadData(Parameter *parameter)
       util::Memory memory;
       memory.start();
     	m_registry.Construct(feature, line);
-    	timer.check("Construction time");
-      memory.stop();
-      VERBOSE(1, "Construction memory needed for model: " << memory.getVMEMMB()  << "[MB]" << std::endl);
+    	memory.stop();
+    	printTimeMem("Construction", timer.get_elapsed_time(), memory.getVMEMMB());
     }
     else {
     	// replace feature name with new name
@@ -538,9 +537,8 @@ bool StaticData::LoadData(Parameter *parameter)
       util::Memory memory;
       memory.start();
     	m_registry.Construct(newName, newLine);
-    	timer.check("Construction time");
-      memory.stop();
-      VERBOSE(1, "Construction memory needed for model: " << memory.getVMEMMB()  << "[MB]" << std::endl);
+    	memory.stop();
+    	printTimeMem("Construction", timer.get_elapsed_time(), memory.getVMEMMB());
     }
 
   }
@@ -926,34 +924,42 @@ void StaticData::LoadFeatureFunctions()
     }
 
     if (doLoad) {
-      VERBOSE(1, "Loading " << ff->GetScoreProducerDescription() << endl);
+      VERBOSE(0, "Loading " << ff->GetScoreProducerDescription() << endl);
       Timer timer;
       timer.start();
       util::Memory memory;
       memory.start();
       ff->Load();
-      timer.check("Loading time");
       memory.stop();
-      VERBOSE(1, "Loading memory needed for model: " << memory.getVMEMMB()  << "[MB]" << std::endl);
+      printTimeMem("Loading", timer.get_elapsed_time(), memory.getVMEMMB());
     }
   }
 
   const std::vector<PhraseDictionary*> &pts = PhraseDictionary::GetColl();
   for (size_t i = 0; i < pts.size(); ++i) {
     PhraseDictionary *pt = pts[i];
-    VERBOSE(1, "Loading " << pt->GetScoreProducerDescription() << endl);
+    VERBOSE(0, "Loading " << pt->GetScoreProducerDescription() << endl);
     Timer timer;
     util::Memory memory;
     memory.start();
     timer.start();
     pt->Load();
-    timer.check("Loading time");
     memory.stop();
-    VERBOSE(1, "Loading memory needed for model: " << memory.getVMEMMB()  << "[MB]" << std::endl);
+    printTimeMem("Loading", timer.get_elapsed_time(), memory.getVMEMMB());
   }
 
   CheckLEGACYPT();
 }
+
+void StaticData::printTimeMem(char *msg, double time, double mem){
+  stringstream ss;
+  ss << msg << " time: " << time << "[s],\t";
+  ss << "memory: " << mem  << "[MB]" << std::endl;
+  if (mem>0){
+    VERBOSE(0, ss.str());
+  }
+}
+
 
 bool StaticData::CheckWeights() const
 {
