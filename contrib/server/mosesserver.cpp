@@ -210,6 +210,11 @@ public:
   execute(xmlrpc_c::paramList const& paramList,
           xmlrpc_c::value *   const  retvalP) {
 
+    // report thread number
+#if defined(WITH_THREADS) && defined(BOOST_HAS_PTHREADS)
+    VERBOSE(1, "Translating line " << 0 << " in thread id " << pthread_self() << endl);
+#endif
+
     const params_t params = paramList.getStruct(0);
     paramList.verifyEnd(1);
     params_t::const_iterator si = params.find("text");
