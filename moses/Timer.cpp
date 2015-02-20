@@ -32,6 +32,20 @@ double Timer::get_elapsed_time()
   return elapsed_time();
 }
 
+double Timer::get_elapsed_time_msec()
+{
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  return (ts.tv_sec-monotonicTime.tv_sec)*1000 + (ts.tv_nsec - monotonicTime.tv_nsec) / 1000000.0;
+}
+
+double Timer::get_elapsed_thread_time_msec()
+{
+  struct timespec ts;
+  clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts);
+  return (ts.tv_sec-threadTime.tv_sec)*1000 + (ts.tv_nsec - threadTime.tv_nsec) / 1000000.0;
+}
+
 /***
  * Start a timer.  If it is already running, let it continue running.
  * Print an optional message.
@@ -49,6 +63,8 @@ void Timer::start(const char* msg)
 
   // Set the start time;
   time(&start_time);
+  clock_gettime(CLOCK_MONOTONIC,&monotonicTime);
+  clock_gettime(CLOCK_THREAD_CPUTIME_ID, &threadTime);
 }
 
 /***

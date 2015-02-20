@@ -548,7 +548,7 @@ int main(int argc, char** argv)
   int port = 8080;
   const char* logfile = "/dev/null";
   bool isSerial = false;
-  size_t numThreads = 10; //for translation tasks
+  int numThreads = 1; //for translation tasks
 
   for (int i = 0; i < argc; ++i) {
     if (!strcmp(argv[i],"--server-port")) {
@@ -594,10 +594,17 @@ int main(int argc, char** argv)
     exit(1);
   }
 
+  if (!params->GetParam("threads").empty()){
+    VERBOSE(0,"setting number of threads from the config file" << endl);
+    StaticData::setParamThreads(numThreads,params);
+  }
+
   //512 MB data limit (512KB is not enough for optimization)
   xmlrpc_limit_set(XMLRPC_XML_SIZE_LIMIT_ID, 512*1024*1024);
 
   xmlrpc_c::registry myRegistry;
+
+  VERBOSE(0,"moses server #threads=" << numThreads << endl);
 
   xmlrpc_c::methodPtr const translator(new Translator(numThreads));
   xmlrpc_c::methodPtr const updater(new Updater);

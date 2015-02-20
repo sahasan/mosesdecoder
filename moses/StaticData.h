@@ -731,6 +731,11 @@ public:
     return m_useLegacyPT;
   }
 
+  //read number of threads from parameters
+  //used by moses server to read number of threads
+  //TODO could be removed and a call to StaticData::ThreadCount, but then no option for setting thread number in moseserver!
+  static bool setParamThreads(int &threadCount, Parameter *parameter);
+
 private:
   void printTimeMem(char *msg, double time, double mem);
 

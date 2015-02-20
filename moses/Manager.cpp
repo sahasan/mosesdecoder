@@ -80,6 +80,9 @@ Manager::~Manager()
  */
 void Manager::ProcessSentence()
 {
+  Timer translationTime;
+  translationTime.start();
+
   // reset statistics
   ResetSentenceStats(m_source);
 
@@ -97,7 +100,7 @@ void Manager::ProcessSentence()
   Timer getOptionsTime;
   getOptionsTime.start();
   m_transOptColl->CreateTranslationOptions();
-  VERBOSE(1, "Line "<< m_lineNumber << ": Collecting options took " << getOptionsTime << " seconds" << endl);
+  VERBOSE(2, "Line "<< m_lineNumber << ": Collecting options took " << getOptionsTime << " seconds" << endl);
 
   // some reporting on how long this took
   IFVERBOSE(2) {
@@ -106,10 +109,8 @@ void Manager::ProcessSentence()
   }
 
   // search for best translation with the specified algorithm
-  Timer searchTime;
-  searchTime.start();
   m_search->ProcessSentence();
-  VERBOSE(1, "Line " << m_lineNumber << ": Search took " << searchTime << " seconds" << endl);
+  VERBOSE(1, "Line " << m_lineNumber << ": translation time=" << translationTime.get_elapsed_time_msec() << "[msec]. thread time=" << translationTime.get_elapsed_thread_time_msec() << "[msec]" << endl);
 }
 
 /**

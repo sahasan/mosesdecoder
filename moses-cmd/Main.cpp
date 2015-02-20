@@ -426,7 +426,7 @@ public:
     }
     manager.CalcDecoderStatistics();
 
-    VERBOSE(1, "Line " << m_lineNumber << ": Translation took " << translationTime << " seconds total" << endl);
+    //VERBOSE(1, "Line " << m_lineNumber << ": Translation took " << translationTime << " seconds total" << endl);
   }
 
   ~TranslationTask() {
@@ -724,6 +724,7 @@ int main(int argc, char** argv)
     }
 
 #ifdef WITH_THREADS
+    VERBOSE(0,"moses #threads=" << staticData.ThreadCount() << endl);
     ThreadPool pool(staticData.ThreadCount());
 #endif
 
@@ -782,7 +783,7 @@ int main(int argc, char** argv)
     return EXIT_FAILURE;
   }
 
-  IFVERBOSE(1) util::PrintUsage(std::cerr);
+  IFVERBOSE(0) util::PrintUsage(std::cerr);
 
 #ifndef EXIT_RETURN
   //This avoids that destructors are called (it can take a long time)

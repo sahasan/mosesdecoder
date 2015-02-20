@@ -439,33 +439,8 @@ bool StaticData::LoadData(Parameter *parameter)
                                 Scan<size_t>(m_parameter->GetParam("clean-lm-cache")[0]) : 1;
 
   m_threadCount = 1;
-  const std::vector<std::string> &threadInfo = m_parameter->GetParam("threads");
-  if (!threadInfo.empty()) {
-    if (threadInfo[0] == "all") {
-#ifdef WITH_THREADS
-      m_threadCount = boost::thread::hardware_concurrency();
-      if (!m_threadCount) {
-        UserMessage::Add("-threads all specified but Boost doesn't know how many cores there are");
-        return false;
-      }
-#else
-      UserMessage::Add("-threads all specified but moses not built with thread support");
-      return false;
-#endif
-    } else {
-      m_threadCount = Scan<int>(threadInfo[0]);
-      if (m_threadCount < 1) {
-        UserMessage::Add("Specify at least one thread.");
-        return false;
-      }
-#ifndef WITH_THREADS
-      if (m_threadCount > 1) {
-        UserMessage::Add(std::string("Error: Thread count of ") + threadInfo[0] + " but moses not built with thread support");
-        return false;
-      }
-#endif
-    }
-  }
+  if (!setParamThreads(m_threadCount,m_parameter))
+    return false;
 
   m_startTranslationId = (m_parameter->GetParam("start-translation-id").size() > 0) ?
                          Scan<long>(m_parameter->GetParam("start-translation-id")[0]) : 0;
@@ -1168,6 +1143,36 @@ void StaticData::CheckLEGACYPT()
   m_useLegacyPT = false;
 }
 
+bool StaticData::setParamThreads(int &threadCount, Parameter *parameter) {
+  const std::vector<std::string> &threadInfo = parameter->GetParam("threads");
+  if (!threadInfo.empty()) {
+    if (threadInfo[0] == "all") {
+#ifdef WITH_THREADS
+      threadCount = boost::thread::hardware_concurrency();
+      if (!threadCount) {
+        UserMessage::Add("-threads all specified but Boost doesn't know how many cores there are");
+        return false;
+      }
+#else
+      UserMessage::Add("-threads all specified but moses not built with thread support");
+      return false;
+#endif
+    } else {
+      threadCount = Scan<int>(threadInfo[0]);
+      if (threadCount < 1) {
+        UserMessage::Add("Specify at least one thread.");
+        return false;
+      }
+#ifndef WITH_THREADS
+      if (threadCount > 1) {
+        UserMessage::Add(std::string("Error: Thread count of ") + threadInfo[0] + " but moses not built with thread support");
+        return false;
+      }
+#endif
+    }
+  }
+  return true;
+}
 
 } // namespace
 

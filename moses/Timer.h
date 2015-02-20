@@ -16,17 +16,6 @@ namespace Moses
  */
 class Timer
 {
-  friend std::ostream& operator<<(std::ostream& os, Timer& t);
-
-private:
-  bool running;
-  // note: this only has the resolution of seconds, we'd often like better resolution
-  // we make our best effort to do this on a system-by-system basis
-  time_t start_time;
-
-  // in seconds
-  double elapsed_time();
-
 public:
   /***
    * 'running' is initially false.  A timer needs to be explicitly started
@@ -40,8 +29,25 @@ public:
 //  void restart(const char* msg = 0);
 //  void stop(const char* msg = 0);
   void check(const char* msg = 0);
+  //get time in seconds
   double get_elapsed_time();
+  //get time in msec
+  double get_elapsed_time_msec();
+  //get thread time in msec
+  double get_elapsed_thread_time_msec();
 
+  friend std::ostream& operator<<(std::ostream& os, Timer& t);
+
+private:
+  bool running;
+  // note: this only has the resolution of seconds, we'd often like better resolution
+  // we make our best effort to do this on a system-by-system basis
+  time_t start_time;
+  struct timespec monotonicTime;
+  struct timespec threadTime;
+
+  // in seconds
+  double elapsed_time();
 };
 
 }
