@@ -736,6 +736,11 @@ public:
   //TODO could be removed and a call to StaticData::ThreadCount, but then no option for setting thread number in moseserver!
   static bool setParamThreads(int &threadCount, Parameter *parameter);
 
+  //thread safe writing to stderr
+#ifdef WITH_THREADS
+  mutable boost::mutex stderr_mutex;
+#endif
+
 private:
   void printTimeMem(char *msg, double time, double mem);
 

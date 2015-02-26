@@ -110,6 +110,11 @@ void Manager::ProcessSentence()
 
   // search for best translation with the specified algorithm
   m_search->ProcessSentence();
+  //lock for thread safety
+
+#ifdef WITH_THREADS
+  boost::mutex::scoped_lock lock(StaticData::Instance().stderr_mutex);
+#endif
   VERBOSE(1, "Line " << m_lineNumber << ": translation time=" << translationTime.get_elapsed_time_msec() << "[msec]. thread time=" << translationTime.get_elapsed_thread_time_msec() << "[msec]" << endl);
 }
 
