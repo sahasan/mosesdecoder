@@ -25,7 +25,7 @@ public:
   virtual void setReferenceFiles(const std::vector<std::string>& referenceFiles); // must be 2 files exactly: src+trg
   virtual void prepareStats(std::size_t sid, const std::string& text, ScoreStats& entry);
   virtual std::size_t NumberOfScores() const {
-    return 3;
+    return 6;
   }
   virtual float calculateScore(const std::vector<int>& comps) const;
 

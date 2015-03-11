@@ -14,10 +14,10 @@ namespace MosesTuning
 class ScoreStats;
 
 /**
- * An implementation of position-independent word error rate.
- * This is defined as
- *   1 - (correct - max(0,output_length - ref_length)) / ref_length
- * In fact, we ignore the " 1 - " so that it can be maximised.
+ * An implementation of sentence error rate.
+ *
+ * MERT maximizes, so this will return 1-SER, i.e. Accuracy:
+ * acc = #correct/#total (correct here means exact matches on sentence level)
  */
 class SerScorer: public StatisticsBasedScorer
 {
